@@ -1,0 +1,48 @@
+---
+title: "MRP model"
+output: html_notebook
+---
+
+```{r, echo = FALSE}
+library(arm)
+library(dplyr)
+```
+
+
+```{r load_data}
+voters <- read.csv('data/voters.csv',)
+census <- read.csv('data/census_clean.csv')
+voters$age_gender <- as.factor(paste0(voters$age_range, "_", voters$gender))
+voters$labor <- ifelse(voters$party == 'ALP', 1, 0)
+voters <- voters %>% filter(age < 100)
+
+voters <- tbl_df(voters)
+census <- tbl_df(census)
+```
+
+```{r}
+fit1 <- glmer(labor ~ (1|electorate) + (1|state) + (1|age_gender),
+              data = voters, family = binomial(link = "logit"))
+```
+
+```{r}
+cellpred <- invlogit(fixef(fit1)["(Intercept)"] +
+                     ranef(fit1)$electorate[census$electorate,1] +
+                     ranef(fit1)$age_gender[census$age_gender,1] +
+                     ranef(fit1)$state[census$state,1])
+
+fix_intercept <- fixef(fit1)["(Intercept)"]
+re_electorate <- ranef(fit1)$electorate[census$electorate,]
+re_age_gender <- ranef(fit1)$age_gender[census$age_gender,]
+re_state <- ranef(fit1)$state[census$state,]
+
+cellpred2 <- invlogit(fix_intercept + re_electorate + re_age_gender + re_state)
+
+cellpredweighted <- cellpred * census$prop
+
+## This is broken cos these things aren't named.
+
+seat_predictions <- 100 * as.vector(tapply(cellpredweighted, census$electorate, sum))
+```
+
+
