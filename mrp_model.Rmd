@@ -10,11 +10,11 @@ library(dplyr)
 
 
 ```{r load_data}
-voters <- read.csv('data/voters.csv',)
+voters <- read.csv('data/voters.csv', )
 census <- read.csv('data/census_clean.csv')
 voters$age_gender <- as.factor(paste0(voters$age_range, "_", voters$gender))
 voters$labor <- ifelse(voters$party == 'ALP', 1, 0)
-voters <- voters %>% filter(age < 100)
+
 
 voters <- tbl_df(voters)
 census <- tbl_df(census)
@@ -40,9 +40,14 @@ cellpred2 <- invlogit(fix_intercept + re_electorate + re_age_gender + re_state)
 
 cellpredweighted <- cellpred * census$prop
 
-## This is broken cos these things aren't named.
-
-seat_predictions <- 100 * as.vector(tapply(cellpredweighted, census$electorate, sum))
+df <- data.frame(census$electorate, census$age_gender, census$state, fix_intercept, re_electorate, re_age_gender, re_state)
 ```
+
+```{r}
+add_coefficients <- function(x) {
+  
+}
+```
+
 
 
